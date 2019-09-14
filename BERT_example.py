@@ -34,8 +34,8 @@ segments_tensors = torch.tensor([segments_ids])
 # Load pre-trained model (weights)
 # model = BertModel.from_pretrained('../models/modeling_bert/bert-base-uncased-pytorch_model.bin')
 # model = BertModel.from_pretrained('../models/modeling_bert/bert-base-uncased-config.json')
-modelConfig = BertConfig.from_pretrained('../models/modeling_bert/bert-base-uncased-config.json')
-model = BertModel.from_pretrained('../models/modeling_bert/bert-base-uncased-pytorch_model.bin', config=modelConfig)
+modelConfig = BertConfig.from_pretrained('/home/disk1/zhaoyuying/models/modeling_bert/bert-base-uncased-config.json')
+model = BertModel.from_pretrained('/home/disk1/zhaoyuying/models/modeling_bert/bert-base-uncased-pytorch_model.bin', config=modelConfig)
 
 # Set the model in evaluation mode to desactivate the DropOut modules
 # This is IMPORTANT to have reproductible results during evaluation!

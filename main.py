@@ -20,7 +20,7 @@ from pytorch_transformers import BertTokenizer, BertModel, BertForMaskedLM, Bert
 
 from iapr_utils import *
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "3"
+os.environ["CUDA_VISIBLE_DEVICES"] = "2"
 import argparse
 parser = argparse.ArgumentParser(description='BlockDrop Training')
 parser.add_argument('--image_lr', type=float, default=1e-4, help='learning rate')
@@ -32,7 +32,7 @@ parser.add_argument('--weight_decay', type=float, default=0.0005, help='weight d
 parser.add_argument('--batch_size', type=int, default=32, help='batch size')
 parser.add_argument('--max_epochs', type=int, default=500, help='total epochs to run')
 parser.add_argument('--hashbits', type=int, default=32)
-parser.add_argument('--cv_dir', default='iapr_5')
+parser.add_argument('--cv_dir', default='checkpoints')
 # -----------------------------------------------------------------------------------
 args = parser.parse_args()
 # define the Pytorch Tensor
@@ -342,10 +342,10 @@ torch.nn.init.xavier_uniform_(imageNet.fc.weight)
 torch.nn.init.constant_(imageNet.fc.bias, 0.0)
 imageNet.cuda()
 # text net
-tokenizer = BertTokenizer.from_pretrained('../models/tokenization_bert/bert-base-uncased-vocab.txt')
+tokenizer = BertTokenizer.from_pretrained('/home/disk1/zhaoyuying/models/tokenization_bert/bert-base-uncased-vocab.txt')
 
-modelConfig = BertConfig.from_pretrained('../models/modeling_bert/bert-base-uncased-config.json')
-textExtractor = BertModel.from_pretrained('../models/modeling_bert/bert-base-uncased-pytorch_model.bin', config=modelConfig)
+modelConfig = BertConfig.from_pretrained('/home/disk1/zhaoyuying/models/modeling_bert/bert-base-uncased-config.json')
+textExtractor = BertModel.from_pretrained('/home/disk1/zhaoyuying/models/modeling_bert/bert-base-uncased-pytorch_model.bin', config=modelConfig)
 textHashNet = TextHashNet(input_dim=textExtractor.config.hidden_size, code_length=args.hashbits)
 textExtractor.cuda()
 textHashNet.cuda()

@@ -12,7 +12,7 @@ def default_loader(path):
 
 
 class MyDataset(torchdata.Dataset):
-    def __init__(self, txt='../dataset/iapr-tc12_255labels/iapr_test',
+    def __init__(self, txt='/home/disk1/zhaoyuying/dataset/iapr-tc12_255labels/iapr_test',
                  transform=None, loader=default_loader):
         self.transform = transform
         self.loader = loader
@@ -37,8 +37,8 @@ class MyDataset(torchdata.Dataset):
         words = self.name_label[index]  # words = [file_name, sample_name, label]
         # print('words = ', words[0:2])
 
-        img_path = os.path.join('../dataset/iapr-tc12_255labels/JPEGImages', words[0], words[1]+'.jpg')
-        text_path = os.path.join('../dataset/iapr-tc12_255labels/annotations', words[0], words[1]+'.txt')
+        img_path = os.path.join('/home/disk1/zhaoyuying/dataset/iapr-tc12_255labels/JPEGImages', words[0], words[1]+'.jpg')
+        text_path = os.path.join('/home/disk1/zhaoyuying/dataset/iapr-tc12_255labels/annotations', words[0], words[1]+'.txt')
         # img
         img = self.loader(img_path)
         if self.transform is not None:
@@ -75,7 +75,7 @@ def IAPR_dataloader(args):
     ])
 
 
-    root = '../dataset/iapr-tc12_255labels'
+    root = '/home/disk1/zhaoyuying/dataset/iapr-tc12_255labels'
     train_file = os.path.join(root, 'iapr_train')
     test_file = os.path.join(root, 'iapr_test')
     retrieval_file = os.path.join(root, 'iapr_retrieval')
@@ -93,7 +93,7 @@ def IAPR_dataloader(args):
 
 
 
-root = '../dataset/iapr-tc12_255labels'
+root = '/home/disk1/zhaoyuying/dataset/iapr-tc12_255labels'
 train_file = os.path.join(root, 'iapr_train')
 test_file = os.path.join(root, 'iapr_test')
 retrieval_file = os.path.join(root, 'iapr_retrieval')
