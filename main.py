@@ -4,7 +4,7 @@ from pytorch_transformers import BertTokenizer, BertModel, BertForMaskedLM, Bert
 import argparse
 from iapr_utils import *
 from utils import *
-from model import ImageNet,TextHashNet
+from model import ImageNet,TextNet
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "2"
 use_cuda = torch.cuda.is_available()
@@ -30,21 +30,17 @@ def get_args():
 
 def train(args, epoch):
     imageNet.train()
-    textExtractor.train()
-    textHashNet.train()
+    textNet.train()
 
     accum_loss = 0
     for batch_idx, (images, texts, labels) in enumerate(train_loader):
         # image
         images, labels = Variable(images).cuda(), Variable(labels).cuda()
         image_hashCodes = imageNet.forward(images)
-
         # text
         tokens, segments, input_masks = get_tokens(texts,tokenizer)
-        output = textExtractor(tokens, token_type_ids=segments, attention_mask=input_masks)
-        text_embeddings = output[0][:, 0, :]  # 到底textExtractor返回了什么东西？
-        text_hashCodes = textHashNet.forward(text_embeddings)
-
+        text_hashCodes = textNet.forward(tokens, segments, input_masks)
+        #计算triplet loss
         imgae_triplet_loss, text_triplet_loss, \
         imgae_text_triplet_loss, text_image_triplet_loss, \
         len_triplets = CrossModel_triplet_loss(image_hashCodes, text_hashCodes, labels, args.margin)
@@ -73,11 +69,10 @@ def train(args, epoch):
 
 def test(args,epoch):
     imageNet.eval()
-    textExtractor.eval()
-    textHashNet.eval()
-   
-    tst_image_binary, tst_text_binary, tst_label, tst_time = compute_result_CrossModel(test_loader, imageNet, textExtractor, textHashNet,tokenizer)
-    db_image_binary, db_text_binary, db_label, db_time = compute_result_CrossModel(db_loader, imageNet, textExtractor, textHashNet,tokenizer)
+    textNet.eval()
+
+    tst_image_binary, tst_text_binary, tst_label, tst_time = compute_result_CrossModel(test_loader, imageNet, textNet,tokenizer)
+    db_image_binary, db_text_binary, db_label, db_time = compute_result_CrossModel(db_loader, imageNet,  textNet,tokenizer)
     # print('test_codes_time = %.6f, db_codes_time = %.6f'%(tst_time ,db_time))
 
     it_mAP = compute_mAP_MultiLabels(db_text_binary, tst_image_binary, db_label, tst_label)
@@ -87,12 +82,10 @@ def test(args,epoch):
     f = open('result/' + args.cv_dir + 'mAP.txt', 'a')
     f.write('Epoch:'+str(epoch)+':  it_mAP = '+str(it_mAP)+', ti_mAP = '+str(ti_mAP)+'\n')
     f.close()
-    
+
     if epoch%50 == 0:
         torch.save(imageNet.state_dict(), args.cv_dir+'/ckpt_E%d_it_mAP_%.5f_ti_mAP_%.5f_imageNet.t7'%(epoch, it_mAP, ti_mAP))
-        torch.save(textExtractor.state_dict(), args.cv_dir+'/ckpt_E%d_it_mAP_%.5f_ti_mAP_%.5f_textExtractor.t7'%(epoch, it_mAP, ti_mAP))
-        torch.save(textHashNet.state_dict(), args.cv_dir+'/ckpt_E%d_it_mAP_%.5f_ti_mAP_%.5f_textHashNet.t7'%(epoch, it_mAP, ti_mAP))
-
+        torch.save(textNet.state_dict(), args.cv_dir+'/ckpt_E%d_it_mAP_%.5f_ti_mAP_%.5f_textHashNet.t7'%(epoch, it_mAP, ti_mAP))
 
 if __name__ == '__main__':
     args=get_args()
@@ -108,18 +101,14 @@ if __name__ == '__main__':
     imageNet.cuda()
     # text net
     tokenizer = BertTokenizer.from_pretrained('/home/disk1/zhaoyuying/models/tokenization_bert/bert-base-uncased-vocab.txt')
-    modelConfig = BertConfig.from_pretrained('/home/disk1/zhaoyuying/models/modeling_bert/bert-base-uncased-config.json')
-    textExtractor = BertModel.from_pretrained('/home/disk1/zhaoyuying/models/modeling_bert/bert-base-uncased-pytorch_model.bin', config=modelConfig)
-    textHashNet = TextHashNet(input_dim=textExtractor.config.hidden_size, code_length=args.hashbits)
-    textExtractor.cuda()
-    textHashNet.cuda()
+    textNet = TextNet(code_length=args.hashbits)
+    textNet.cuda()
 
     # optimizer_image = optim.Adam(imageNet.parameters(), lr=args.image_lr, weight_decay=args.weight_decay)
     # optimizer_text = optim.Adam(list(textExtractor.parameters())+list(textHashNet.parameters()), lr=args.text_lr, weight_decay=args.weight_decay)
-    optimizer = optim.Adam(list(imageNet.parameters())+list(textExtractor.parameters())+list(textHashNet.parameters()), lr=args.lr, weight_decay=args.weight_decay)
+    optimizer = optim.Adam(list(imageNet.parameters())+list(textNet.parameters()), lr=args.lr, weight_decay=args.weight_decay)  #+list(textExtractor.parameters())
 
     for epoch in range(start_epoch, start_epoch+args.max_epochs+1):
-        # lr_scheduler_image.adjust_learning_rate(epoch)
         train(args,epoch)
         if epoch % 10 == 0:
             test(args,epoch)
