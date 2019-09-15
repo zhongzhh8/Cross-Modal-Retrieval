@@ -6,7 +6,7 @@ from iapr_utils import *
 from utils import *
 from model import ImageNet,TextNet
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "2"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 use_cuda = torch.cuda.is_available()
 
 def get_args():
@@ -43,7 +43,7 @@ def train(args, epoch):
         image_hashCodes = imageNet.forward(images)
         # text
         tokens, segments, input_masks = get_tokens(texts,tokenizer)
-        text_hashCodes = textNet.forward(tokens, segments, input_masks)
+        text_hashCodes = textNet(tokens, segments, input_masks)
         #计算triplet loss
         imgae_triplet_loss, text_triplet_loss, \
         imgae_text_triplet_loss, text_image_triplet_loss, \

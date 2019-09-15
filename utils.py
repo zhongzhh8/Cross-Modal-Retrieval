@@ -13,7 +13,7 @@ def get_tokens(texts,tokenizer):
         tokens.append(indexed_tokens)
         segments.append([0] * len(indexed_tokens))
         input_masks.append([1] * len(indexed_tokens))
-    max_len = max([len(single) for single in tokens])  #
+    max_len = max([len(single) for single in tokens])
     # get padding and mask 用0在后面补足，使所有token list长度相同
     for j in range(len(tokens)):
         padding = [0] * (max_len - len(tokens[j]))

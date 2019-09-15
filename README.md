@@ -86,7 +86,7 @@ Use Bert as text feature extracter with the help of [pytorch_transformers](<http
 
 ![1568475564289](pic/1568475446630.png)
 
-
+refer to this [blog](<https://blog.csdn.net/weixin_41519463/article/details/100863313>)
 
 ## Cross-modal Retrieval Loss
 
