@@ -30,7 +30,7 @@ class TextNet(nn.Module):
 
     def forward(self, tokens, segments, input_masks):
         output=self.textExtractor(tokens, token_type_ids=segments, attention_mask=input_masks)
-        text_embeddings = output[0][:, 0, :]
+        text_embeddings = output[0][:, 0, :]  #output[0](batch size, sequence length, model hidden dimension)
 
         hash_features = self.fc(text_embeddings)
         hash_features=self.tanh(hash_features)

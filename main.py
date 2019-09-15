@@ -19,9 +19,13 @@ def get_args():
     parser.add_argument('--weight_decay', type=float, default=0.0005, help='weight decay')
     # parser.add_argument('--batch_size', type=int, default=128, help='batch size')
     parser.add_argument('--batch_size', type=int, default=32, help='batch size')
-    parser.add_argument('--max_epochs', type=int, default=500, help='total epochs to run')
+    parser.add_argument('--max_epochs', type=int, default=300, help='total epochs to run')
     parser.add_argument('--hashbits', type=int, default=32)
     parser.add_argument('--cv_dir', default='checkpoints')
+
+    parser.add_argument('--root_dir',type=str, default='/home/disk1/zhaoyuying/dataset/iapr-tc12_255labels')
+    parser.add_argument('--image_dir', type=str, default='/home/disk1/zhaoyuying/dataset/iapr-tc12_255labels/JPEGImages')
+    parser.add_argument('--text_dir', type=str, default='/home/disk1/zhaoyuying/dataset/iapr-tc12_255labels/annotations')
     # -----------------------------------------------------------------------------------
     args = parser.parse_args()
 
@@ -100,7 +104,9 @@ if __name__ == '__main__':
     imageNet=ImageNet(args.hashbits)
     imageNet.cuda()
     # text net
+    # tokenizer = BertTokenizer.from_pretrained('bert-base-uncased') #翻不了墙，无法下载下来
     tokenizer = BertTokenizer.from_pretrained('/home/disk1/zhaoyuying/models/tokenization_bert/bert-base-uncased-vocab.txt')
+
     textNet = TextNet(code_length=args.hashbits)
     textNet.cuda()
 

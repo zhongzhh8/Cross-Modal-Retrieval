@@ -12,17 +12,14 @@ def default_loader(path):
 
 
 class MyDataset(torchdata.Dataset):
-    def __init__(self, txt='/home/disk1/zhaoyuying/dataset/iapr-tc12_255labels/iapr_test',
-                 transform=None, loader=default_loader):
+    def __init__(self, args,txt,transform=None, loader=default_loader):
         self.transform = transform
         self.loader = loader
-        # self.tokenizer = BertTokenizer.from_pretrained('../models/tokenization_bert/bert-base-uncased-vocab.txt')
-
 
         name_label = []
         for line in open(txt):
             line = line.strip('\n').split()
-            label = list(map(int, np.array(line[len(line)-255:])))
+            label = list(map(int, np.array(line[len(line)-255:]))) #后255个二进制码是label的，前2912个是单词在词袋中的二进制编码
             tem = re.split('[/.]', line[0])
             file_name, sample_name = tem[0], tem[1]
             name_label.append([file_name, sample_name, label])
@@ -31,14 +28,16 @@ class MyDataset(torchdata.Dataset):
             # label_list = np.where(label=='1')
             # print('label_list = ', label_list)
         self.name_label = name_label
+        self.image_dir=args.image_dir
+        self.text_dir = args.text_dir
 
 
     def __getitem__(self, index):
         words = self.name_label[index]  # words = [file_name, sample_name, label]
         # print('words = ', words[0:2])
 
-        img_path = os.path.join('/home/disk1/zhaoyuying/dataset/iapr-tc12_255labels/JPEGImages', words[0], words[1]+'.jpg')
-        text_path = os.path.join('/home/disk1/zhaoyuying/dataset/iapr-tc12_255labels/annotations', words[0], words[1]+'.txt')
+        img_path = os.path.join(self.image_dir, words[0], words[1]+'.jpg')
+        text_path = os.path.join(self.text_dir, words[0], words[1]+'.txt')
         # img
         img = self.loader(img_path)
         if self.transform is not None:
@@ -75,44 +74,44 @@ def IAPR_dataloader(args):
     ])
 
 
-    root = '/home/disk1/zhaoyuying/dataset/iapr-tc12_255labels'
+    root = args.root_dir
     train_file = os.path.join(root, 'iapr_train')
     test_file = os.path.join(root, 'iapr_test')
     retrieval_file = os.path.join(root, 'iapr_retrieval')
 
-    train_set = MyDataset(txt=train_file, transform=transform_train)
+    train_set = MyDataset(args,txt=train_file, transform=transform_train)
     train_loader = torchdata.DataLoader(train_set, batch_size=args.batch_size, shuffle=True, num_workers=4)
 
-    test_set = MyDataset(txt=test_file, transform=transform_test)
+    test_set = MyDataset(args,txt=test_file, transform=transform_test)
     test_loader = torchdata.DataLoader(test_set, batch_size=args.batch_size, shuffle=False, num_workers=4)
 
-    db_set = MyDataset(txt=retrieval_file, transform=transform_test)
+    db_set = MyDataset(args,txt=retrieval_file, transform=transform_test)
     db_loader = torchdata.DataLoader(db_set, batch_size=args.batch_size, shuffle=False, num_workers=4)
 
     return train_loader, test_loader, db_loader
 
 
 
-root = '/home/disk1/zhaoyuying/dataset/iapr-tc12_255labels'
-train_file = os.path.join(root, 'iapr_train')
-test_file = os.path.join(root, 'iapr_test')
-retrieval_file = os.path.join(root, 'iapr_retrieval')
-
-mean = (0.4914, 0.4822, 0.4465)
-std = (0.2023, 0.1994, 0.2010)
-transform_train = transforms.Compose([
-    transforms.Resize((224, 224)),
-    transforms.RandomHorizontalFlip(),
-    transforms.ToTensor(),
-    transforms.Normalize(mean=mean, std=std)
-])
-train_set = MyDataset(txt=train_file, transform=transform_train)
-train_loader = torchdata.DataLoader(train_set, batch_size=32, shuffle=True, num_workers=4)
-
-iii = 0
-for batch_idx, (images, texts, labels) in enumerate(train_loader):
-    # print('batch_idx = ', batch_idx)
-    iii += 1
+# root = '/home/disk1/zhaoyuying/dataset/iapr-tc12_255labels'
+# train_file = os.path.join(root, 'iapr_train')
+# test_file = os.path.join(root, 'iapr_test')
+# retrieval_file = os.path.join(root, 'iapr_retrieval')
+#
+# mean = (0.4914, 0.4822, 0.4465)
+# std = (0.2023, 0.1994, 0.2010)
+# transform_train = transforms.Compose([
+#     transforms.Resize((224, 224)),
+#     transforms.RandomHorizontalFlip(),
+#     transforms.ToTensor(),
+#     transforms.Normalize(mean=mean, std=std)
+# ])
+# train_set = MyDataset(txt=train_file, transform=transform_train)
+# train_loader = torchdata.DataLoader(train_set, batch_size=32, shuffle=True, num_workers=4)
+#
+# iii = 0
+# for batch_idx, (images, texts, labels) in enumerate(train_loader):
+#     # print('batch_idx = ', batch_idx)
+#     iii += 1
 
 
 # # words =  ['32', '32289']

@@ -21,7 +21,7 @@ def get_tokens(texts,tokenizer):
         segments[j] += padding
         input_masks[j] += padding
     tokens = torch.tensor(tokens)
-    segments = torch.tensor(segments)
+    segments = torch.tensor(segments) #只有一个句子的情况：tokens:[CLS] the dog is hairy . [SEP]   token_type_ids:   0   0   0   0  0     0   0
     input_masks = torch.tensor(input_masks)
     return tokens.cuda(), segments.cuda(), input_masks.cuda()
 
@@ -47,7 +47,7 @@ def compute_result_image(dataloader, net):
     # return torch.cat(img_name), torch.cat(img),  torch.sign(torch.cat(bs)), torch.cat(clses), total_time
 
 
-def triplet_loss(Ihash, labels, margin):
+def triplet_loss(Ihash, labels, margin):#单模态的triplet loss
     triplet_loss = torch.tensor(0.0).cuda()
     labels_ = labels.cpu().data.numpy()
     triplets = []
@@ -84,8 +84,8 @@ def CrossModel_triplet_loss(imgae_Ihash, text_Ihash, labels, margin):
     labels_ = labels.cpu().data.numpy()
     triplets = []
     for label in labels_:
-        label_mask = np.matmul(labels_, np.transpose(label)) > 0  # multi-labels
-        label_indices = np.where(label_mask)[0]
+        label_mask = np.matmul(labels_, np.transpose(label)) > 0  # multi-labels  (32,255)x(255,1) =（32,1） 某一行>0说明这两个图片的标签有重合，是同类样本
+        label_indices = np.where(label_mask)[0]   #np.where 输出满足条件 (即非0) 元素的坐标  与当前样本属于同类的样本（包含它自己）
         if len(label_indices) < 2:
             continue
         negative_indices = np.where(np.logical_not(label_mask))[0]
@@ -154,7 +154,6 @@ def compute_result_CrossModel(dataloader, imageNet, textHashNet,tokenizer):
 
     return torch.sign(torch.cat(bs_image)), torch.sign(torch.cat(bs_text)), torch.cat(clses), total_time
 
-
 def compute_mAP_MultiLabels(trn_binary, tst_binary, trn_label, tst_label):
     """
     compute mAP by searching testset from trainset
@@ -165,34 +164,55 @@ def compute_mAP_MultiLabels(trn_binary, tst_binary, trn_label, tst_label):
     AP = []
     Ns = torch.arange(1, trn_binary.size(0) + 1)
     Ns = Ns.type(torch.FloatTensor)
-    # cnt = 0
-    # total = 0.0
-    # print('Ns = ', Ns)
     for i in range(tst_binary.size(0)):
         query_label, query_binary = tst_label[i], tst_binary[i]
-        # print('query_binary = ', query_binary)
-        # print('trn_binary = ', trn_binary)
-        # 计算汉明距离，并将距离从小到大排序(query_result是索引)
-        _, query_result = torch.sum((query_binary != trn_binary).long(), dim=1).sort()
-        # print('query_result = ', query_result)
+        _, query_result = torch.sum((query_binary != trn_binary).long(), dim=1).sort() #计算汉明距离，并将距离从小到大排序(query_result是索引)
         # correct = (query_label == trn_label[query_result]).float()
-        # 与 query label 相同的
-        correct = ((trn_label[query_result] * query_label).sum(1) > 0).float()
-        # print('correct = ', correct)
-        P = torch.cumsum(correct, dim=0) / Ns
-        # print('P = ', P)
+        correct = ((trn_label[query_result] * query_label).sum(1) > 0).float() #这18000个索引对应的样本label是否与query label有重合
+        P = torch.cumsum(correct.type(torch.FloatTensor), dim=0) / Ns
         AP.append(torch.sum(P * correct) / torch.sum(correct))
-
-        # if query_label[0] == 1:
-        #     print('tst'+str(i)+' AP = ', torch.sum(P * correct) / torch.sum(correct))
-        # cnt += 1
-        # total += torch.sum(P * correct) / torch.sum(correct)
-        # print('append to AP = ', torch.sum(P * correct) / torch.sum(correct))
-        # print(torch.sum(correct))
-        # print(trn_binary.size(0))
-    # print('AP = ', AP)
     mAP = torch.mean(torch.Tensor(AP))
-    # print('cnt = ', cnt)
-    # print('total = ', total)
-    # print('mAP = ', mAP)
     return mAP
+
+# def compute_mAP_MultiLabels(trn_binary, tst_binary, trn_label, tst_label):
+#     """
+#     compute mAP by searching testset from trainset
+#     https://github.com/flyingpot/pytorch_deephash
+#     """
+#     for x in trn_binary, tst_binary, trn_label, tst_label: x.long()
+#
+#     AP = []
+#     Ns = torch.arange(1, trn_binary.size(0) + 1)
+#     Ns = Ns.type(torch.FloatTensor)
+#     # cnt = 0
+#     # total = 0.0
+#     # print('Ns = ', Ns)
+#     for i in range(tst_binary.size(0)):
+#         query_label, query_binary = tst_label[i], tst_binary[i]
+#         # print('query_binary = ', query_binary)
+#         # print('trn_binary = ', trn_binary)
+#         # 计算汉明距离，并将距离从小到大排序(query_result是索引)
+#         _, query_result = torch.sum((query_binary != trn_binary).long(), dim=1).sort()
+#         # print('query_result = ', query_result)
+#         # correct = (query_label == trn_label[query_result]).float()
+#         # 与 query label 相同的
+#         correct = ((trn_label[query_result] * query_label).sum(1) > 0).float()
+#         # print('correct = ', correct)
+#         P = torch.cumsum(correct, dim=0) / Ns
+#         # print('P = ', P)
+#         AP.append(torch.sum(P * correct) / torch.sum(correct))
+#
+#         # if query_label[0] == 1:
+#         #     print('tst'+str(i)+' AP = ', torch.sum(P * correct) / torch.sum(correct))
+#         # cnt += 1
+#         # total += torch.sum(P * correct) / torch.sum(correct)
+#         # print('append to AP = ', torch.sum(P * correct) / torch.sum(correct))
+#         # print(torch.sum(correct))
+#         # print(trn_binary.size(0))
+#     # print('AP = ', AP)
+#     mAP = torch.mean(torch.Tensor(AP))
+#     # print('cnt = ', cnt)
+#     # print('total = ', total)
+#     # print('mAP = ', mAP)
+#     return mAP
+

@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/cross_model_retrieval_zhao.iml" filepath="$PROJECT_DIR$/.idea/cross_model_retrieval_zhao.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/cross_model_retrieval.iml" filepath="$PROJECT_DIR$/.idea/cross_model_retrieval.iml" />
     </modules>
   </component>
 </project>
